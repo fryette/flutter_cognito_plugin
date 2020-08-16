@@ -5,7 +5,7 @@ import plugin_scaffold
 typealias CompletionCallback<T> = (T?, Error?) -> Void
 
 class Cognito {
-    let awsClient = AWSMobileClient.sharedInstance()
+    let awsClient = AWSMobileClient.default()
 
     func createErrorCallback(_ result: @escaping FlutterResult) -> (Error?) -> Void {
         return { error in
@@ -75,7 +75,7 @@ class Cognito {
         let args = call.arguments as! [String: Any?]
         let username = args["username"] as! String
         let password = args["password"] as! String
-        
+
         awsClient.signIn(
             username: username,
             password: password,
@@ -196,5 +196,32 @@ class Cognito {
             token: token,
             completionHandler: createCallback(result, dumpUserState)
         )
+    }
+
+    func showSignIn(call: FlutterMethodCall, result: @escaping FlutterResult) {
+        let navigationController = CognitoPluginAppDelegate.navigationController
+        if navigationController == nil {
+            let error = FlutterError(
+                code: "UINavigationControllerNotFound",
+                message: "This method cannot be called without access to a UINavigationController.\n" +
+                    "Did you forget to replace `FlutterAppDelegate` with `CognitoPluginAppDelegate` in your app's AppDelegate.swift?",
+                details: nil
+            )
+            result(error)
+        } else {
+            let args = call.arguments as! [String: Any?]
+            let identityProvider = args["identityProvider"] as! String
+            let scopes = args["scopes"] as! [String]
+
+            // Optionally override the scopes based on the usecase.
+            let hostedUIOptions = HostedUIOptions(scopes: scopes, identityProvider: identityProvider)
+
+            // Present the Hosted UI sign in.
+            self.awsClient.showSignIn(
+                navigationController: navigationController!,
+                hostedUIOptions: hostedUIOptions,
+                createCallback(result, dumpUserState)
+            )
+        }
     }
 }

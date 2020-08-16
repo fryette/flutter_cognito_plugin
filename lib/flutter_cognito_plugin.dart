@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_cognito_plugin/exception_serializer.dart';
 import 'package:flutter_cognito_plugin/exceptions.dart';
@@ -200,14 +201,12 @@ class Cognito {
     );
   }
 
-  static Future<ForgotPasswordResult> changePassword(
+  static Future<void> changePassword(
       String oldPassword, String newPassword) async {
-    return ForgotPasswordResult.fromMsg(
-      await invokeMethod("changePassword", {
+    await invokeMethod("changePassword", {
         "oldPassword": oldPassword ?? "",
         "newPassword": newPassword ?? ""
-      }),
-    );
+    });
   }
 
   static Future<ForgotPasswordResult> confirmForgotPassword(
@@ -228,8 +227,14 @@ class Cognito {
     return UserState.values[await invokeMethod("currentUserState")];
   }
 
-  static Future<void> signOut() async {
-    await invokeMethod("signOut");
+  static Future<void> signOut({
+    bool invalidateTokens: false,
+    bool signOutGlobally: false,
+  }) async {
+    await invokeMethod("signOut", {
+      "invalidateTokens": invalidateTokens,
+      "signOutGlobally": signOutGlobally,
+    });
   }
 
   static Future<String> getUsername() async {
@@ -279,5 +284,15 @@ class Cognito {
 
   static Future<Credentials> getCredentials() async {
     return Credentials.fromMsg(await invokeMethod("getCredentials"));
+  }
+
+  static Future<UserState> showSignIn({
+    @required String identityProvider,
+    @required List<String> scopes,
+  }) async {
+    await invokeMethod("showSignIn", {
+      "identityProvider": identityProvider,
+      "scopes": scopes,
+    });
   }
 }

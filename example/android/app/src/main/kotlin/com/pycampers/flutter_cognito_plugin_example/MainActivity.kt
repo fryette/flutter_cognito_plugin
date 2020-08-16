@@ -1,13 +1,12 @@
 package com.pycampers.flutter_cognito_plugin_example
 
-import android.os.Bundle
-
-import io.flutter.app.FlutterActivity
+import androidx.annotation.NonNull
+import com.pycampers.flutter_cognito_plugin.CognitoPluginActivity
+import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugins.GeneratedPluginRegistrant
 
-class MainActivity : FlutterActivity() {
-  override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-    GeneratedPluginRegistrant.registerWith(this)
-  }
+class MainActivity : CognitoPluginActivity("myapp") {
+    override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
+        GeneratedPluginRegistrant.registerWith(flutterEngine);
+    }
 }

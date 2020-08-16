@@ -74,20 +74,151 @@ That should create a symlink to the file in the ios module, and bundle it into t
 
 This way you won't need to maintain 2 config files.
 
+## Hosted UI
+
+The [Hosted UI](https://docs.amplify.aws/sdk/auth/hosted-ui/q/platform/android) feature is needed for using Social login.
+Unfortunately, this requires you to modify native code in your app.
+
+First, add the following section to `android/app/src/main/res/raw/awsconfiguration.json` -
+
+(`"myapp://callback"` and `"myapp://signout"` are custom urls you can provide in the "App client settings" section of Cognito User Pools)
+
+```
+{
+  ...
+
+  "Auth": {
+    "Default": {
+      "OAuth": {
+        "WebDomain": "XXX.auth.ap-south-1.amazoncognito.com",
+        "AppClientId": "XXXXXXXX",
+        "SignInRedirectURI": "myapp://callback",
+        "SignOutRedirectURI": "myapp://signout",
+        "Scopes": ["email"]
+      }
+    }
+  }
+}
+```
+
+### Android
+
+1. Open your app's [`andorid/app/src/main/com/kotlin/.../MainActivity.kt`](example/android/app/src/main/kotlin/com/pycampers/flutter_cognito_plugin_example/MainActivity.kt)
+and replace `FlutterActivity()` by `CognitoPluginActivity("<url scheme>")`.
+
+Here's what it should look like -
+
+```kotlin
+package ...
+
+import androidx.annotation.NonNull
+import com.pycampers.flutter_cognito_plugin.CognitoPluginActivity
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugins.GeneratedPluginRegistrant
+
+class MainActivity : CognitoPluginActivity("myapp") {
+    override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
+        GeneratedPluginRegistrant.registerWith(flutterEngine);
+    }
+}
+```
+
+2. Add the following to [`android/app/src/main/AndroidManifest.xml`](example/android/app/src/main/AndroidManifest.xml) -
+
+```xml
+<manifest ...>
+        <application ...>
+            ...
+
+            <!-- Add this section for AWS Cognito hosted UI-->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="myapp" />
+            </intent-filter>
+
+        </application>
+</manifest>
+```
+
+### iOS
+
+1. Open you apps's [`ios/Runner/AppDelegate.swift`](example/ios/Runner/AppDelegate.swift),
+and replace `FlutterAppDelegate` with `CognitoPluginAppDelegate`.
+
+Here's what it should look like -
+
+```swift
+import Flutter
+import flutter_cognito_plugin
+import UIKit
+
+@UIApplicationMain
+@objc class AppDelegate: CognitoPluginAppDelegate {
+    override func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+    ) -> Bool {
+        GeneratedPluginRegistrant.register(with: self)
+        return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    }
+}
+```
+
+2. Add the following to [`ios/Runner/Info.plist`](example/ios/Runner/Info.plist)
+
+```
+<plist version="1.0">
+<dict>
+    <!-- YOUR OTHER PLIST ENTRIES HERE -->
+
+    <!-- ADD AN ENTRY TO CFBundleURLTypes for Cognito Auth -->
+    <!-- IF YOU DO NOT HAVE CFBundleURLTypes, YOU CAN COPY THE WHOLE BLOCK BELOW -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>myapp</string>
+            </array>
+        </dict>
+    </array>
+</dict>
+</array>
+
+<!-- ... -->
+</dict>
+```
+
+### Dart
+
+Once the native setup is complete, you can use the following in your flutter app to launch the Hosted UI -
+
+```dart
+Cognito.showSignIn(
+  identityProvider: "google",
+  scopes: ["email", "openid"],
+);
+```
+
 ## Usage
 
-The plugin comes with a showcase app that will let you try all features;
-see if you setup the `awsconfiguration.json` correctly.
+The plugin comes with a showcase app that will let you try all features --
+given that you setup the `awsconfiguration.json` correctly.
 
 <image src='https://i.imgur.com/5Lnl79O.png' height=400 />
 
-It's present in the usual `example` directory
+It's present in the usual [`example`](https://github.com/scientifichackers/flutter_cognito_plugin/blob/master/example/lib/main.dart) directory
 
 ```
 $ git clone https://github.com/pycampers/flutter_cognito_plugin.git
 $ cd flutter_cognito_plugin/example
 $ flutter run
 ```
+
 
 ## AppSync
 

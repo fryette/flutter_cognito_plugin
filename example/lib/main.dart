@@ -1,10 +1,24 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_cognito_plugin/flutter_cognito_plugin.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(Main());
+}
+
+class Main extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      theme: ThemeData(fontFamily: 'Courier'),
+      home: Scaffold(
+        appBar: AppBar(title: const Text('AWS Cognito Sdk')),
+        body: MyApp(),
+      ),
+    );
+  }
 }
 
 class MyApp extends StatefulWidget {
@@ -69,16 +83,14 @@ class MyAppState extends State<MyApp> {
 
   List<Widget> buildReturnValue() {
     return [
-      Text(
+      SelectableText(
         userState?.toString() ?? "UserState will appear here",
         style: TextStyle(fontStyle: FontStyle.italic),
       ),
-      Divider(
-        color: Colors.black,
-      ),
+      Divider(),
       SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        child: Text(
+        child: SelectableText(
           returnValue?.toString() ?? "return values will appear here.",
           style: TextStyle(fontStyle: FontStyle.italic),
         ),
@@ -201,6 +213,15 @@ class MyAppState extends State<MyApp> {
           return Cognito.signOut();
         }),
       ),
+      RaisedButton(
+        child: Text("showSignIn()"),
+        onPressed: onPressWrapper(() {
+          return Cognito.showSignIn(
+            identityProvider: "google",
+            scopes: ["email", "openid"],
+          );
+        }),
+      ),
     ];
   }
 
@@ -267,7 +288,20 @@ class MyAppState extends State<MyApp> {
         onPressed: onPressWrapper(() {
           return Cognito.getCredentials();
         }),
-      )
+      ),
+      RaisedButton(
+        child: Text("copy access token"),
+        onPressed: onPressWrapper(() async {
+          var tokens = await Cognito.getTokens();
+          Clipboard.setData(ClipboardData(text: tokens.accessToken));
+          Scaffold.of(context).showSnackBar(
+            SnackBar(
+              content: Text('copied access token to clipboard'),
+            ),
+          );
+          return tokens.accessToken;
+        }),
+      ),
     ];
   }
 
@@ -304,7 +338,13 @@ class MyAppState extends State<MyApp> {
 }
 
 Widget buildChildren(List<List<Widget>> children) {
-  List<Widget> c = children.map((item) => Column(children: item)).toList();
+  List<Widget> c = children.map((item) {
+    return Wrap(
+      children: item,
+      spacing: 10,
+      alignment: WrapAlignment.center,
+    );
+  }).toList();
   return ListView.separated(
     itemCount: children.length,
     itemBuilder: (context, index) {
@@ -314,7 +354,7 @@ Widget buildChildren(List<List<Widget>> children) {
       );
     },
     separatorBuilder: (context, index) {
-      return Container(color: Colors.purple[800], height: 2.5);
+      return Divider();
     },
   );
 }
